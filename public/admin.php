@@ -34,7 +34,7 @@ if (empty($_SESSION['admin_ok'])):
   <div class="card" style="max-width: 420px; width: 100%;">
     <div class="card-body" style="padding: 2.5rem;">
       <div style="width: 64px; height: 64px; background: var(--primary-fixed); border-radius: var(--radius-md); display: flex; align-items: center; justify-content: center; margin: 0 auto 1.5rem; font-size: 2rem; color: var(--primary);">
-        <i class="bi bi-shield-lock-fill"></i>
+        🔒
       </div>
       <h1 style="font-size: 1.5rem; font-weight: 600; text-align: center; margin-bottom: 0.5rem;">
         Panel de Administración
@@ -181,7 +181,7 @@ $pdfRate = $metrics['total_contracts'] > 0
     <div>
       <div class="d-flex align-items-center gap-2 mb-2">
         <span class="badge" style="background: var(--primary-fixed); color: var(--primary);">
-          <i class="bi bi-shield-lock-fill"></i> ADMIN
+          🔒 ADMIN
         </span>
       </div>
       <h1 style="font-size: 1.75rem; font-weight: 600; letter-spacing: -0.02em; color: var(--on-surface); margin-bottom: 0.5rem;">
@@ -208,7 +208,7 @@ $pdfRate = $metrics['total_contracts'] > 0
 <!-- Configuración de notificaciones -->
 <section class="card mb-4">
   <div class="card-header">
-    <i class="bi bi-gear-fill" style="color: var(--primary);"></i>
+    ⚙️
     <span>Configuración de notificaciones automáticas</span>
   </div>
   <div class="card-body">
@@ -310,7 +310,7 @@ $pdfRate = $metrics['total_contracts'] > 0
   <div class="col-lg-6">
     <div class="card h-100">
       <div class="card-header">
-        <i class="bi bi-bell-fill" style="color: var(--primary);"></i>
+        🔔
         <span>Desglose de notificaciones pendientes</span>
       </div>
       <div class="card-body">
@@ -348,7 +348,7 @@ $pdfRate = $metrics['total_contracts'] > 0
   <div class="col-lg-6">
     <div class="card h-100">
       <div class="card-header">
-        <i class="bi bi-bar-chart-fill" style="color: var(--primary);"></i>
+        📊
         <span>Contratos por mes (últimos 12 meses)</span>
       </div>
       <div class="card-body">
@@ -391,7 +391,7 @@ $pdfRate = $metrics['total_contracts'] > 0
   <div class="col-lg-5">
     <div class="card h-100">
       <div class="card-header">
-        <i class="bi bi-trophy-fill" style="color: var(--warning);"></i>
+        🏆
         <span>Top 5 clientes</span>
       </div>
       <div class="table-responsive">
@@ -430,7 +430,7 @@ $pdfRate = $metrics['total_contracts'] > 0
     <div class="card h-100">
       <div class="card-header d-flex justify-content-between align-items-center">
         <div>
-          <i class="bi bi-fire" style="color: var(--error);"></i>
+          🔥
           <span>Notificaciones críticas (próximos 15 días)</span>
         </div>
         <a href="notifications.php" style="font-size: 0.875rem;">Ver todas</a>
@@ -477,7 +477,7 @@ $pdfRate = $metrics['total_contracts'] > 0
   <div class="col-lg-4">
     <div class="card h-100">
       <div class="card-header">
-        <i class="bi bi-graph-up-arrow" style="color: var(--success);"></i>
+        📈
         <span>Métricas clave</span>
       </div>
       <div class="card-body">
@@ -516,7 +516,7 @@ $pdfRate = $metrics['total_contracts'] > 0
   <div class="col-lg-8">
     <div class="card h-100">
       <div class="card-header">
-        <i class="bi bi-clock-history" style="color: var(--primary);"></i>
+        ⏰
         <span>Actividad reciente</span>
       </div>
       <div class="table-responsive">
