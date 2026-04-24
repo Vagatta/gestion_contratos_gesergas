@@ -1,0 +1,6 @@
+.env
+uploads/contracts/*
+!uploads/contracts/.gitkeep
+vendor/
+node_modules/
+*.log
