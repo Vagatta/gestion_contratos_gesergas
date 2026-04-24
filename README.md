@@ -3,6 +3,8 @@
 SaaS simple para registrar contratos, métodos de contacto por cliente, y generar
 notificaciones automáticas de seguimiento (por defecto: `fecha_contrato + 11 meses`).
 
+Proyecto dashboard para los clientes de gesergas
+
 ## Stack
 - **Backend:** PHP 8+ (PDO), MariaDB/MySQL 5.7+
 - **Frontend:** Bootstrap 5, jQuery 3, Bootstrap Icons
@@ -164,3 +166,7 @@ Integración en `contract_form.php`: al seleccionar un PDF se llama vía AJAX a
 - Consultas preparadas (PDO) en todos los accesos a BD.
 - Escape de salida con `e()` (`htmlspecialchars`).
 - Sanitización de extensión de archivo (solo `.pdf`) y nombre aleatorio en disco.
+=======
+# gestion_contratos_gesergas
+Proyecto dashboard para los clientes de gesergas
+>>>>>>> 2285a36d50b0c760b356fa6aa78e18ec98425115
