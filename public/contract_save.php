@@ -1,20 +1,34 @@
 <?php
 require_once __DIR__ . '/../config/db.php';
 require_once __DIR__ . '/../src/PdfExtractor.php';
+require_once __DIR__ . '/../src/Security.php';
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     redirect('contracts.php');
 }
 
+// Validar CSRF
+if (!isset($_POST['csrf_token']) || !Security::validateCsrfToken($_POST['csrf_token'])) {
+    flash_set('danger', 'Token de seguridad inválido. Por favor, recargue la página e intente nuevamente.');
+    redirect('contracts.php');
+}
+
+// Rate limiting
+if (!Security::checkRateLimit('contract_save', 3, 60)) {
+    flash_set('danger', 'Demasiados intentos. Por favor, espere un minuto antes de intentar nuevamente.');
+    redirect('contracts.php');
+}
+
+// Sanitización y validación de inputs
 $id            = (int)($_POST['id'] ?? 0);
-$contractDate  = trim((string)($_POST['contract_date'] ?? ''));
-$clientName    = trim((string)($_POST['client_name'] ?? ''));
-$address       = trim((string)($_POST['address'] ?? ''));
-$contratista   = trim((string)($_POST['contratista'] ?? ''));
-$notes         = trim((string)($_POST['notes'] ?? ''));
-$types         = $_POST['contact_type']  ?? [];
-$labels        = $_POST['contact_label'] ?? [];
-$values        = $_POST['contact_value'] ?? [];
+$contractDate  = Security::sanitizeInput($_POST['contract_date'] ?? '', 'string');
+$clientName    = Security::sanitizeInput($_POST['client_name'] ?? '', 'string');
+$address       = Security::sanitizeInput($_POST['address'] ?? '', 'string');
+$contratista   = Security::sanitizeInput($_POST['contratista'] ?? '', 'string');
+$notes         = Security::sanitizeInput($_POST['notes'] ?? '', 'string');
+$types         = array_map(fn($t) => Security::sanitizeInput($t, 'string'), $_POST['contact_type'] ?? []);
+$labels        = array_map(fn($l) => Security::sanitizeInput($l, 'string'), $_POST['contact_label'] ?? []);
+$values        = array_map(fn($v) => Security::sanitizeInput($v, 'string'), $_POST['contact_value'] ?? []);
 $primaryIndex  = isset($_POST['primary_contact']) ? (int)$_POST['primary_contact'] : 0;
 
 // Variables para almacenar datos extraídos del PDF
@@ -24,6 +38,13 @@ $pdfUploaded = false;
 // Procesar PDF subido y extraer información
 if (!empty($_FILES['document']['name']) && is_uploaded_file($_FILES['document']['tmp_name'])) {
     if ($_FILES['document']['error'] === UPLOAD_ERR_OK) {
+        // Validación de archivo PDF mejorada
+        $fileValidation = Security::validateFile($_FILES['document'], ['application/pdf'], 5242880); // 5MB max
+        if (!$fileValidation['valid']) {
+            flash_set('danger', 'Error en el archivo PDF: ' . $fileValidation['error']);
+            redirect('contract_form.php' . ($id > 0 ? '?id=' . $id : ''));
+        }
+        
         $ext = strtolower(pathinfo($_FILES['document']['name'], PATHINFO_EXTENSION));
         if ($ext === 'pdf') {
             $tmpPdfPath = $_FILES['document']['tmp_name'];
@@ -34,33 +55,69 @@ if (!empty($_FILES['document']['name']) && is_uploaded_file($_FILES['document'][
                 $pdfExtractedFields = $result['fields'];
                 $pdfUploaded = true;
                 
-                // Si los campos del formulario están vacíos, completar con datos del PDF
+                // Sanitizar datos extraídos del PDF
                 if ($clientName === '' && !empty($result['fields']['name'])) {
-                    $clientName = $result['fields']['name'];
+                    $clientName = Security::sanitizeInput($result['fields']['name'], 'string');
                 }
                 if ($address === '' && !empty($result['fields']['address'])) {
-                    $address = $result['fields']['address'];
+                    $address = Security::sanitizeInput($result['fields']['address'], 'string');
                 }
                 if ($contractDate === '' && !empty($result['fields']['date'])) {
-                    $contractDate = $result['fields']['date'];
+                    $contractDate = Security::sanitizeInput($result['fields']['date'], 'string');
                 }
             }
         }
     }
 }
 
+// Validación de campos obligatorios usando Security
 $missing = [];
-if ($clientName === '')  $missing[] = 'nombre del cliente';
-if ($contratista === '') $missing[] = 'contratista';
-if ($address === '')     $missing[] = 'dirección';
-if ($contractDate === '') $missing[] = 'fecha del contrato';
-
-// Al menos un método de contacto con valor
-$hasContact = false;
-foreach ($values as $v) {
-    if (trim((string)$v) !== '') { $hasContact = true; break; }
+if ($clientName === '' || !Security::validateName($clientName)) {
+    $missing[] = 'nombre del cliente (solo letras, espacios y caracteres comunes)';
 }
-if (!$hasContact) $missing[] = 'al menos un método de contacto';
+if ($contratista === '' || !Security::validateName($contratista)) {
+    $missing[] = 'contratista (solo letras, espacios y caracteres comunes)';
+}
+if ($address === '' || !Security::validateAddress($address)) {
+    $missing[] = 'dirección (formato inválido)';
+}
+if ($contractDate === '' || !Security::validateDate($contractDate)) {
+    $missing[] = 'fecha del contrato (formato YYYY-MM-DD)';
+}
+
+// Validación de métodos de contacto
+$hasContact = false;
+$contactErrors = [];
+foreach ($values as $i => $v) {
+    $value = trim((string)$v);
+    $type = $types[$i] ?? '';
+    
+    if ($value !== '') {
+        $hasContact = true;
+        
+        // Validar formato según tipo
+        switch ($type) {
+            case 'email':
+                if (!Security::validateEmail($value)) {
+                    $contactErrors[] = "email '$value' no es válido";
+                }
+                break;
+            case 'phone':
+                if (!Security::validatePhone($value)) {
+                    $contactErrors[] = "teléfono '$value' no tiene formato válido español";
+                }
+                break;
+        }
+    }
+}
+
+if (!$hasContact) {
+    $missing[] = 'al menos un método de contacto';
+}
+
+if ($contactErrors) {
+    $missing = array_merge($missing, $contactErrors);
+}
 
 // Documento PDF: obligatorio al crear, y al editar solo si no hay ya uno asociado
 $pdfProvided = !empty($_FILES['document']['name']) && is_uploaded_file($_FILES['document']['tmp_name']);
@@ -229,11 +286,6 @@ try {
         if (!empty($pdfExtractedFields['address'])) $extractedInfo[] = 'dirección';
         if (!empty($pdfExtractedFields['email'])) $extractedInfo[] = 'email';
         if (!empty($pdfExtractedFields['phone'])) $extractedInfo[] = 'teléfono';
-        if (!empty($extractedInfo)) {
-            $successMsg .= '. Datos extraídos del PDF: ' . implode(', ', $extractedInfo);
-        } else {
-            $successMsg .= '. No se detectaron campos en el PDF';
-        }
     }
     $successMsg .= '.';
     flash_set('success', $successMsg);

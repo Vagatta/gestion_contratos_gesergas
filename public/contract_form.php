@@ -37,8 +37,9 @@ include __DIR__ . '/includes/header.php';
   </a>
 </div>
 
-<form method="post" action="contract_save.php" enctype="multipart/form-data">
+<form method="post" action="contract_save.php" enctype="multipart/form-data" id="contractForm">
   <input type="hidden" name="id" value="<?= (int)$id ?>">
+  <?= Security::csrfField() ?>
 
   <!-- PDF upload PRIMERO - autocompleta el resto del formulario -->
   <div class="card mb-4" style="border: 2px dashed var(--primary); background: var(--primary-fixed);">
@@ -333,5 +334,144 @@ $(function(){
         $('#pdfResult').html('<span class="text-danger">Error analizando PDF.</span>');
       });
   });
+});
+
+// Prevenir múltiples submits y validación mejorada
+$('#contractForm').on('submit', function(e) {
+  const $form = $(this);
+  const $submitBtn = $form.find('button[type="submit"]');
+  
+  // Validación básica
+  const clientName = $('[name=client_name]').val().trim();
+  const contractor = $('[name=contratista]').val().trim();
+  const address = $('[name=address]').val().trim();
+  const contractDate = $('[name=contract_date]').val().trim();
+  
+  const errors = [];
+  
+  // Validación de nombre (solo letras, espacios, y caracteres comunes)
+  const nameRegex = /^[a-zA-ZáéíóúÁÉÍÓÚñÑüÜ\s\'\-\.]{2,100}$/;
+  const addressRegex = /^[a-zA-Z0-9áéíóúÁÉÍÓÚñÑüÜ\s\'\-\.,#ºª\/]{5,200}$/;
+  const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
+  
+  if (!clientName || !nameRegex.test(clientName)) {
+    errors.push('El nombre del cliente es obligatorio y debe tener un formato válido');
+  }
+  
+  if (!contractor || !nameRegex.test(contractor)) {
+    errors.push('El nombre del contratista es obligatorio y debe tener un formato válido');
+  }
+  
+  if (!address || !addressRegex.test(address)) {
+    errors.push('La dirección es obligatoria y debe tener un formato válido');
+  }
+  
+  if (!contractDate || !dateRegex.test(contractDate)) {
+    errors.push('La fecha del contrato es obligatoria y debe tener un formato válido');
+  }
+  
+  // Validar contacto principal
+  const primaryContact = $('[name="contact_value[]"]').first().val().trim();
+  if (!primaryContact) {
+    errors.push('Debe añadir al menos un método de contacto');
+  }
+  
+  if (errors.length > 0) {
+    e.preventDefault();
+    alert('Por favor, corrija los siguientes errores:\n\n' + errors.join('\n'));
+    return false;
+  }
+  
+  // Deshabilitar botón para prevenir múltiples submits
+  $submitBtn.prop('disabled', true)
+    .html('<span class="spinner-border spinner-border-sm me-2"></span>Guardando...')
+    .addClass('disabled');
+  
+  // Rate limiting del lado del cliente
+  if (window.formSubmitTime && (Date.now() - window.formSubmitTime) < 2000) {
+    e.preventDefault();
+    $submitBtn.prop('disabled', false)
+      .html('Guardar contrato')
+      .removeClass('disabled');
+    alert('Por favor, espere unos segundos antes de enviar el formulario nuevamente.');
+    return false;
+  }
+  
+  window.formSubmitTime = Date.now();
+  
+  // Rehabilitar botón después de 10 segundos (por si falla el submit)
+  setTimeout(() => {
+    $submitBtn.prop('disabled', false)
+      .html('Guardar contrato')
+      .removeClass('disabled');
+  }, 10000);
+});
+
+// Validación en tiempo real
+const nameRegex = /^[a-zA-ZáéíóúÁÉÍÓÚñÑüÜ\s\'\-\.]{2,100}$/;
+const addressRegex = /^[a-zA-Z0-9áéíóúÁÉÍÓÚñÑüÜ\s\'\-\.,#ºª\/]{5,200}$/;
+const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const phoneRegex = /^(\+34)?[6-9]\d{8}$/;
+
+$('[name=client_name]').on('input', function() {
+  const val = $(this).val().trim();
+  if (val && !nameRegex.test(val)) {
+    $(this).addClass('is-invalid');
+    if (!$(this).siblings('.invalid-feedback').length) {
+      $(this).after('<div class="invalid-feedback">El nombre solo puede contener letras, espacios y caracteres comunes</div>');
+    }
+  } else {
+    $(this).removeClass('is-invalid');
+    $(this).siblings('.invalid-feedback').remove();
+  }
+});
+
+$('[name=contratista]').on('input', function() {
+  const val = $(this).val().trim();
+  if (val && !nameRegex.test(val)) {
+    $(this).addClass('is-invalid');
+    if (!$(this).siblings('.invalid-feedback').length) {
+      $(this).after('<div class="invalid-feedback">El nombre solo puede contener letras, espacios y caracteres comunes</div>');
+    }
+  } else {
+    $(this).removeClass('is-invalid');
+    $(this).siblings('.invalid-feedback').remove();
+  }
+});
+
+$('[name=address]').on('input', function() {
+  const val = $(this).val().trim();
+  if (val && !addressRegex.test(val)) {
+    $(this).addClass('is-invalid');
+    if (!$(this).siblings('.invalid-feedback').length) {
+      $(this).after('<div class="invalid-feedback">La dirección contiene caracteres no válidos</div>');
+    }
+  } else {
+    $(this).removeClass('is-invalid');
+    $(this).siblings('.invalid-feedback').remove();
+  }
+});
+
+$('[name="contact_value[]"]').on('input', function() {
+  const $row = $(this).closest('[data-row]');
+  const type = $row.find('[name="contact_type[]"]').val();
+  const val = $(this).val().trim();
+  
+  if (val) {
+    if (type === 'email' && !emailRegex.test(val)) {
+      $(this).addClass('is-invalid');
+      if (!$(this).siblings('.invalid-feedback').length) {
+        $(this).after('<div class="invalid-feedback">El email no tiene un formato válido</div>');
+      }
+    } else if (type === 'phone' && !phoneRegex.test(val.replace(/[^\d+]/g, ''))) {
+      $(this).addClass('is-invalid');
+      if (!$(this).siblings('.invalid-feedback').length) {
+        $(this).after('<div class="invalid-feedback">El teléfono no tiene un formato válido español</div>');
+      }
+    } else {
+      $(this).removeClass('is-invalid');
+      $(this).siblings('.invalid-feedback').remove();
+    }
+  }
 });
 </script>

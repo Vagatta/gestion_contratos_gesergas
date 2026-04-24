@@ -1,5 +1,6 @@
 <?php
 require_once __DIR__ . '/../config/db.php';
+require_once __DIR__ . '/../src/Security.php';
 $pageTitle = 'Contratos';
 
 $q       = trim((string)($_GET['q']       ?? ''));
@@ -162,6 +163,7 @@ include __DIR__ . '/includes/header.php';
             </a>
             <form method="post" action="contract_delete.php" class="d-inline" onsubmit="return confirm('¿Eliminar este contrato permanentemente?');">
               <input type="hidden" name="id" value="<?= (int)$r['id'] ?>">
+              <?= Security::csrfField() ?>
               <button class="btn btn-sm btn-outline-danger" title="Eliminar">
                 <i class="bi bi-trash"></i>
               </button>
@@ -204,5 +206,46 @@ include __DIR__ . '/includes/header.php';
   </div>
   <?php endif; ?>
 </div>
+
+<script>
+// Prevenir múltiples clicks en botones de eliminar (usando jQuery)
+$('form[action="contract_delete.php"]').on('submit', function(e) {
+  const $form = $(this);
+  const $button = $form.find('button');
+  const isConfirmed = confirm('¿Eliminar este contrato permanentemente?');
+  
+  if (!isConfirmed) {
+    e.preventDefault();
+    return false;
+  }
+  
+  // Deshabilitar botón para prevenir múltiples clicks
+  $button.prop('disabled', true)
+    .html('<span class="spinner-border spinner-border-sm"></span>')
+    .addClass('disabled');
+  
+  // Rate limiting del lado del cliente
+  if (window.deleteClickTime && (Date.now() - window.deleteClickTime) < 2000) {
+    e.preventDefault();
+    $button.prop('disabled', false)
+      .html('<i class="bi bi-trash"></i>')
+      .removeClass('disabled');
+    alert('Por favor, espere unos segundos antes de intentar eliminar nuevamente.');
+    return false;
+  }
+  
+  window.deleteClickTime = Date.now();
+});
+
+// Prevenir múltiples submits en filtros
+$('form[method="get"]').on('submit', function() {
+  const $submitBtn = $(this).find('button[type="submit"]');
+  if ($submitBtn.length) {
+    $submitBtn.prop('disabled', true)
+      .html('<span class="spinner-border spinner-border-sm me-2"></span>Filtrando...')
+      .addClass('disabled');
+  }
+});
+</script>
 
 <?php include __DIR__ . '/includes/footer.php'; ?>

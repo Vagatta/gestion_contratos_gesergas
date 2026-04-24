@@ -1,5 +1,6 @@
 <?php
 require_once __DIR__ . '/../config/db.php';
+require_once __DIR__ . '/../src/Security.php';
 $pageTitle = 'Notificaciones';
 
 $status = $_GET['status'] ?? 'pending';
@@ -158,6 +159,7 @@ include __DIR__ . '/includes/header.php';
               <?php if ($n['status']==='pending'): ?>
                 <form method="post" action="notification_complete.php" style="display: inline;">
                   <input type="hidden" name="id" value="<?= (int)$n['id'] ?>">
+                  <?= Security::csrfField() ?>
                   <button class="btn btn-sm" style="background: var(--success); color: white;">
                     <i class="bi bi-check2"></i> Completar
                   </button>

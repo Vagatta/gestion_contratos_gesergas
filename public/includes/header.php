@@ -1,8 +1,12 @@
 <?php
 require_once __DIR__ . '/../../config/db.php';
+require_once __DIR__ . '/../../src/Security.php';
+require_once __DIR__ . '/../../src/ErrorMonitor.php';
 if (session_status() !== PHP_SESSION_ACTIVE) {
     session_start();
 }
+Security::setSecurityHeaders();
+ErrorMonitor::init();
 $current = basename($_SERVER['PHP_SELF']);
 ?>
 <!doctype html>

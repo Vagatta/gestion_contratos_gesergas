@@ -87,3 +87,21 @@ CREATE TABLE IF NOT EXISTS action_log (
     created_at  DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     INDEX idx_log_entity (entity, entity_id)
 ) ENGINE=InnoDB;
+
+-- Índices adicionales para optimización de consultas frecuentes
+CREATE INDEX idx_clients_contratista ON clients(contratista);
+CREATE INDEX idx_clients_created_at ON clients(created_at);
+
+CREATE INDEX idx_contact_primary ON contact_methods(client_id, is_primary);
+CREATE INDEX idx_contact_value ON contact_methods(value(100));
+
+CREATE INDEX idx_contract_created_at ON contracts(created_at);
+CREATE INDEX idx_contract_document ON contracts(document_path(100));
+CREATE INDEX idx_contract_composite ON contracts(client_id, contract_date);
+
+CREATE INDEX idx_notif_contract ON notifications(contract_id);
+CREATE INDEX idx_notif_composite ON notifications(status, notify_date);
+CREATE INDEX idx_notif_created_at ON notifications(created_at);
+
+CREATE INDEX idx_log_created_at ON action_log(created_at);
+CREATE INDEX idx_log_action ON action_log(action, created_at);
