@@ -6,6 +6,7 @@ require_once __DIR__ . '/../src/Security.php';
 if (session_status() !== PHP_SESSION_ACTIVE) {
     session_start();
 }
+error_log('CSRF DEBUG contract_save: Session ID=' . session_id() . ', session_status=' . session_status());
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     redirect('contracts.php');

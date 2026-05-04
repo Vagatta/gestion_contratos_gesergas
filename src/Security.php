@@ -13,9 +13,11 @@ class Security {
         if (self::$csrfToken === null) {
             if (isset($_SESSION['csrf_token'])) {
                 self::$csrfToken = $_SESSION['csrf_token'];
+                error_log('CSRF DEBUG: Token retrieved from session: ' . substr(self::$csrfToken, 0, 8) . '...');
             } else {
                 self::$csrfToken = bin2hex(random_bytes(32));
                 $_SESSION['csrf_token'] = self::$csrfToken;
+                error_log('CSRF DEBUG: New token generated: ' . substr(self::$csrfToken, 0, 8) . '...');
             }
         }
         return self::$csrfToken;
@@ -25,9 +27,13 @@ class Security {
      * Valida el token CSRF
      */
     public static function validateCsrfToken($token) {
+        $sessionToken = $_SESSION['csrf_token'] ?? 'NOT_SET';
+        error_log('CSRF DEBUG: Validating - Session: ' . substr($sessionToken, 0, 8) . '..., Post: ' . substr($token, 0, 8) . '...');
+        
         if (!isset($_SESSION['csrf_token'])) {
             SecurityLogger::logCSRFAttempt();
             IPBlocker::recordFailedAttempt('csrf_fail');
+            error_log('CSRF DEBUG: Validation FAILED - no session token');
             return false;
         }
         
@@ -35,6 +41,9 @@ class Security {
         if (!$isValid) {
             SecurityLogger::logCSRFAttempt();
             IPBlocker::recordFailedAttempt('csrf_fail');
+            error_log('CSRF DEBUG: Validation FAILED - tokens mismatch');
+        } else {
+            error_log('CSRF DEBUG: Validation SUCCESS');
         }
         
         return $isValid;

@@ -35,6 +35,7 @@ if (!$contacts) {
 }
 
 include __DIR__ . '/includes/header.php';
+error_log('CSRF DEBUG contract_form: Session ID=' . session_id() . ', token=' . substr(Security::getCsrfToken(), 0, 8) . '...');
 $documentLabels = [
     'lease_or_deed' => 'Contrato arrendamiento o escrituras',
     'invoice' => 'Factura',
