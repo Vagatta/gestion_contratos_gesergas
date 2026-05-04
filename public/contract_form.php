@@ -305,7 +305,7 @@ $documentLabels = [
             <div class="small text-muted mb-2">Documentos ya subidos</div>
             <div class="list-group">
               <?php foreach ($documents as $doc): ?>
-                <a class="list-group-item list-group-item-action d-flex justify-content-between align-items-center" href="<?= e(UPLOAD_WEB_PATH . $doc['document_path']) ?>" target="_blank">
+                <a class="list-group-item list-group-item-action d-flex justify-content-between align-items-center" href="document_view.php?id=<?= (int)$doc['id'] ?>" target="_blank">
                   <span><?= e($documentLabels[$doc['document_type']] ?? $doc['document_type']) ?> - <?= e($doc['document_name']) ?></span>
                   <i class="bi bi-box-arrow-up-right"></i>
                 </a>
@@ -699,6 +699,9 @@ $('#contactsWrap').on('input', '[name="contact_value[]"]', function() {
   setFieldState($(this), v ? emailRegex.test(v) : null, 'Email no válido');
 });
 
+// Documentos existentes (para validación - no requerir si ya existe)
+const existingDocTypes = <?= json_encode(array_column($documents, 'document_type')) ?>;
+
 // Prevenir múltiples submits + validación al enviar
 $('#contractForm').on('submit', function(e) {
   const $form = $(this);
@@ -752,7 +755,9 @@ $('#contractForm').on('submit', function(e) {
   else if (!emailRegex.test(primaryEmail)) errors.push('El primer email de contacto no es válido');
 
   $('.doc-field:visible input[data-required-doc="1"]').each(function(){
-    if (!this.files || this.files.length === 0)
+    const docType = $(this).attr('name').match(/documents\[(\w+)\]/)?.[1];
+    const alreadyExists = docType && existingDocTypes.includes(docType);
+    if (!alreadyExists && (!this.files || this.files.length === 0))
       errors.push('Debe subir: ' + $(this).closest('.doc-field').find('label').text().replace('*','').trim());
   });
 
