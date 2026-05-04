@@ -236,7 +236,8 @@ class SecurityLogger {
         if (!empty($details)) {
             $message .= "Detalles:\n";
             foreach ($details as $key => $value) {
-                $message .= "- $key: $value\n";
+                $valueStr = is_array($value) ? json_encode($value, JSON_UNESCAPED_UNICODE) : $value;
+                $message .= "- $key: $valueStr\n";
             }
         }
         
