@@ -1,0 +1,28 @@
+{
+  "name": "Gestion Contratos Gesergas",
+  "dockerComposeFile": "../docker-compose.yml",
+  "service": "web",
+  "workspaceFolder": "/var/www/html",
+  "forwardPorts": [8080, 8081, 3307],
+  "portsAttributes": {
+    "8080": {
+      "label": "App Web",
+      "onAutoForward": "openPreview"
+    },
+    "8081": {
+      "label": "phpMyAdmin"
+    },
+    "3307": {
+      "label": "MariaDB"
+    }
+  },
+  "postCreateCommand": "docker compose up -d",
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "bmewburn.vscode-intelephense-client",
+        "xdebug.php-debug"
+      ]
+    }
+  }
+}
