@@ -1,6 +1,9 @@
 <?php
 require_once __DIR__ . '/../config/db.php';
 require_once __DIR__ . '/../src/Security.php';
+if (session_status() !== PHP_SESSION_ACTIVE) {
+    session_start();
+}
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') redirect('notifications.php');
 
 // Validar CSRF

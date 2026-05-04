@@ -207,6 +207,8 @@ include __DIR__ . '/includes/header.php';
   <?php endif; ?>
 </div>
 
+<?php include __DIR__ . '/includes/footer.php'; ?>
+
 <script>
 // Prevenir múltiples clicks en botones de eliminar (usando jQuery)
 $('form[action="contract_delete.php"]').on('submit', function(e) {
@@ -247,5 +249,3 @@ $('form[method="get"]').on('submit', function() {
   }
 });
 </script>
-
-<?php include __DIR__ . '/includes/footer.php'; ?>
